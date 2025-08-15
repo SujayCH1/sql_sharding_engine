@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sql_sharding_engine/services"
+	"strings"
 
 	"github.com/xwb1989/sqlparser"
 )
@@ -31,7 +32,7 @@ func HandleQuery(w http.ResponseWriter, r *http.Request) {
 
 	services.Logger.Info("Query request parsed")
 
-	primaryKey, err := extractKey(reqBody)
+	primaryKey, err := extractKeys(reqBody)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to extract primary key: %v", err), http.StatusBadRequest)
 		return
@@ -45,58 +46,72 @@ func HandleQuery(w http.ResponseWriter, r *http.Request) {
 }
 
 // helper to parse and find pk from query string
-func extractKey(q services.Query) (string, error) {
+func extractKeys(q services.Query) ([]string, error) {
 	stmt, err := sqlparser.Parse(q.QueryString)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse statement: %s", err)
+		return nil, fmt.Errorf("failed to parse query: %w", err)
 	}
 
 	switch stmt := stmt.(type) {
-	case *sqlparser.Select:
-		if stmt.Where != nil {
-			return extractPKFromExpr(stmt.Where.Expr, services.KeyColumn)
+	case *sqlparser.Insert:
+		pkIndex := -1
+		for i, col := range stmt.Columns {
+			if strings.EqualFold(col.String(), "primary_key") {
+				pkIndex = i
+				break
+			}
+		}
+		if pkIndex == -1 {
+			return nil, fmt.Errorf("primary key column not found in INSERT")
 		}
 
-	case *sqlparser.Insert:
-		cols := stmt.Columns
-		for i, col := range cols {
-			if col.String() == services.KeyColumn {
-				if rows, ok := stmt.Rows.(sqlparser.Values); ok && len(rows) > 0 && len(rows[0]) > i {
-					return sqlparser.String(rows[0][i]), nil
+		var keys []string
+		if rows, ok := stmt.Rows.(sqlparser.Values); ok {
+			for _, row := range rows {
+				if pkIndex < len(row) {
+					keys = append(keys, sqlparser.String(row[pkIndex]))
 				}
 			}
 		}
+		if len(keys) == 0 {
+			return nil, fmt.Errorf("no primary keys found in INSERT rows")
+		}
+		return keys, nil
 
 	case *sqlparser.Update:
-		if stmt.Where != nil {
-			return extractPKFromExpr(stmt.Where.Expr, services.KeyColumn)
+		if pkValue := extractPKFromExpr(stmt.Where); pkValue != "" {
+			return []string{pkValue}, nil
 		}
+		return nil, fmt.Errorf("primary key not found in UPDATE WHERE clause")
 
 	case *sqlparser.Delete:
-		if stmt.Where != nil {
-			return extractPKFromExpr(stmt.Where.Expr, services.KeyColumn)
+		if pkValue := extractPKFromExpr(stmt.Where); pkValue != "" {
+			return []string{pkValue}, nil
 		}
+		return nil, fmt.Errorf("primary key not found in DELETE WHERE clause")
+
+	case *sqlparser.Select:
+		if pkValue := extractPKFromExpr(stmt.Where); pkValue != "" {
+			return []string{pkValue}, nil
+		}
+		return nil, fmt.Errorf("primary key not found in SELECT WHERE clause")
 	}
 
-	return "", fmt.Errorf("unsupported statement type or primary key not found")
+	return nil, fmt.Errorf("unsupported statement type")
 }
 
 // helper to extact pk from SQL expression
-func extractPKFromExpr(expr sqlparser.Expr, pkColumn string) (string, error) {
-	if comp, ok := expr.(*sqlparser.ComparisonExpr); ok {
-		if colName, ok := comp.Left.(*sqlparser.ColName); ok {
-			if colName.Name.String() == pkColumn {
-				return sqlparser.String(comp.Right), nil
-			}
-		}
+func extractPKFromExpr(where *sqlparser.Where) string {
+	if where == nil {
+		return ""
 	}
-
-	if andExpr, ok := expr.(*sqlparser.AndExpr); ok {
-		if val, err := extractPKFromExpr(andExpr.Left, pkColumn); err == nil {
-			return val, nil
-		}
-		return extractPKFromExpr(andExpr.Right, pkColumn)
+	comparison, ok := where.Expr.(*sqlparser.ComparisonExpr)
+	if !ok {
+		return ""
 	}
-
-	return "", fmt.Errorf("primary key column not found in expression")
+	if strings.EqualFold(sqlparser.String(comparison.Left), "primary_key") &&
+		comparison.Operator == "=" {
+		return sqlparser.String(comparison.Right)
+	}
+	return ""
 }
