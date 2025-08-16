@@ -1,9 +1,16 @@
 package main
 
 import (
-	"sql_sharding_engine/apis"
+	"sql_sharding_engine/config"
+	"sql_sharding_engine/loader"
 )
 
 func main() {
-	apis.StartServer()
+	err := loader.LoadServices()
+	if err != nil {
+		config.Logger.Error("failed to load application services:", "error", err)
+	}
+
+	select {}
+
 }

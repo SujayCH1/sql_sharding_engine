@@ -1,0 +1,95 @@
+package mapper
+
+import (
+	"encoding/json"
+	"fmt"
+	"hash/crc32"
+	"net/http"
+	"sql_sharding_engine/config"
+	"strconv"
+)
+
+type shardReq struct {
+	ReqType string       `json:"type"`
+	Shard   config.Shard `json:"shard"`
+}
+
+// func to handle shard add/ remove
+func HandleShard(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req shardReq
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	}
+
+	switch req.ReqType {
+	case "add":
+		err := AddShard(req.Shard)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+	case "remove":
+		err := RemoveShard(req.Shard)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+	default:
+		http.Error(w, "invalid type", http.StatusBadRequest)
+	}
+}
+
+// func used to add a new shard in mapping table
+func AddShard(s config.Shard) error {
+
+	name := s.ShardName
+	id := s.ShardID
+	hash := CalcShardHash(strconv.Itoa(s.ShardID))
+	host := s.ShardHost
+	port := s.ShardPort
+
+	_, err := config.AppDBComm.Exec(
+		"INSERT INTO shardmapping (database_name, shard_id, shard_hash, shard_host, shard_port) VALUES (?, ?, ?, ?, ?)",
+		name, id, hash, host, port,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to insert shard %s: %w", s.ShardName, err)
+	}
+
+	config.Logger.Info("Added shard", name, "into mappings")
+
+	return nil
+}
+
+// func to remove a existing shard from mapping table
+func RemoveShard(s config.Shard) error {
+	id := s.ShardID
+
+	_, err := config.AppDBComm.Exec(
+		"DELETE FROM shardmapping WHERE shard_id = ?", id,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to remove shard %s: %w", s.ShardName, err)
+	}
+
+	config.Logger.Info("Removed shard", s.ShardName, "from mappings")
+
+	return nil
+}
+
+// func to calc shard hash
+func CalcShardHash(id string) uint32 {
+	hash := crc32.ChecksumIEEE([]byte(id))
+
+	return hash
+}

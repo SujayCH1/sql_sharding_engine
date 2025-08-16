@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sql_sharding_engine/services"
+	"sql_sharding_engine/config"
 	"strings"
 
 	"github.com/xwb1989/sqlparser"
@@ -20,9 +20,7 @@ func HandleQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	services.Logger.Info("Query reqest accpeted")
-
-	var reqBody services.Query
+	var reqBody config.Query
 
 	err := json.NewDecoder(r.Body).Decode(&reqBody)
 	if err != nil {
@@ -30,23 +28,21 @@ func HandleQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	services.Logger.Info("Query request parsed")
-
 	primaryKey, err := extractKeys(reqBody)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to extract primary key: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	services.Logger.Info("Primary key extracted")
+	config.Logger.Info("Primary key extracted")
 
 	w.WriteHeader(http.StatusOK)
-	services.Logger.Info("Query received", "query", reqBody.QueryString, "primaryKey", primaryKey)
+	config.Logger.Info("Query received", "query", reqBody.QueryString, "primaryKey", primaryKey)
 
 }
 
 // helper to parse and find pk from query string
-func extractKeys(q services.Query) ([]string, error) {
+func extractKeys(q config.Query) ([]string, error) {
 	stmt, err := sqlparser.Parse(q.QueryString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse query: %w", err)
