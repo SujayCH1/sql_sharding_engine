@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sql_sharding_engine/apis"
+	"sql_sharding_engine/cache"
 	"sql_sharding_engine/config"
 	"sql_sharding_engine/services/connections"
 
@@ -27,6 +28,8 @@ func LoadServices() error {
 	if err != nil {
 		return fmt.Errorf("failed to load application services: %w", err)
 	}
+
+	cache.CreateRedisClient()
 
 	config.Logger.Info("All application services loaded.")
 

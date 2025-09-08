@@ -10,8 +10,9 @@ import (
 )
 
 type shardReq struct {
-	ReqType string       `json:"type"`
-	Shard   config.Shard `json:"shard"`
+	ReqType string          `json:"type"`
+	Shard   config.Shard    `json:"shard"`
+	DB      config.Database `json:"database"`
 }
 
 // func to handle shard add/ remove
@@ -30,14 +31,14 @@ func HandleShard(w http.ResponseWriter, r *http.Request) {
 
 	switch req.ReqType {
 	case "add":
-		err := AddShard(req.Shard)
+		err := AddShard(req.Shard, req.DB.Name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 	case "remove":
-		err := RemoveShard(req.Shard)
+		err := RemoveShard(req.Shard, req.DB.Name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -46,10 +47,11 @@ func HandleShard(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "invalid type", http.StatusBadRequest)
 	}
+
 }
 
 // func used to add a new shard in mapping table
-func AddShard(s config.Shard) error {
+func AddShard(s config.Shard, tableName string) error {
 
 	name := s.ShardName
 	id := s.ShardID
@@ -57,10 +59,15 @@ func AddShard(s config.Shard) error {
 	host := s.ShardHost
 	port := s.ShardPort
 
-	_, err := config.AppDBComm.Exec(
-		"INSERT INTO shardmapping (database_name, shard_id, shard_hash, shard_host, shard_port) VALUES (?, ?, ?, ?, ?)",
-		name, id, hash, host, port,
+	query := fmt.Sprintf(
+		"INSERT INTO %s (database_name, shard_id, shard_hash, shard_host, shard_port) VALUES (?, ?, ?, ?, ?)",
+		tableName,
 	)
+
+	_, err := config.AppDBComm.Exec(query, name, id, hash, host, port)
+	if err != nil {
+		return fmt.Errorf("failed to insert shard %s into %s: %w", s.ShardName, tableName, err)
+	}
 
 	if err != nil {
 		return fmt.Errorf("failed to insert shard %s: %w", s.ShardName, err)
@@ -72,18 +79,20 @@ func AddShard(s config.Shard) error {
 }
 
 // func to remove a existing shard from mapping table
-func RemoveShard(s config.Shard) error {
+func RemoveShard(s config.Shard, tableName string) error {
 	id := s.ShardID
 
-	_, err := config.AppDBComm.Exec(
-		"DELETE FROM shardmapping WHERE shard_id = ?", id,
+	query := fmt.Sprintf(
+		"DELETE FROM %s WHERE shard_id = ?",
+		tableName,
 	)
+
+	_, err := config.AppDBComm.Exec(query, id)
 	if err != nil {
-		return fmt.Errorf("failed to remove shard %s: %w", s.ShardName, err)
+		return fmt.Errorf("failed to remove shard %s from %s: %w", s.ShardName, tableName, err)
 	}
 
-	config.Logger.Info("Removed shard", s.ShardName, "from mappings")
-
+	config.Logger.Info("Removed shard", s.ShardName, "from", tableName)
 	return nil
 }
 

@@ -3,7 +3,9 @@ package apis
 import (
 	"fmt"
 	"net/http"
+	"sql_sharding_engine/cache"
 	"sql_sharding_engine/config"
+	"sql_sharding_engine/services/database"
 	"sql_sharding_engine/services/mapper"
 	"sql_sharding_engine/services/parser"
 	"time"
@@ -17,6 +19,10 @@ func StartServer() error {
 	mux.HandleFunc("/query", parser.HandleQuery)
 
 	mux.HandleFunc("/shard", mapper.HandleShard)
+
+	mux.HandleFunc("/database", database.HandleDatabase)
+
+	mux.HandleFunc("/selectdb", cache.HandleSelectDB)
 
 	server := &http.Server{
 		Addr:         ":8085",

@@ -5,7 +5,14 @@ import (
 	"log/slog"
 	"os"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
+
+type Database struct {
+	Name string `json:"name"`
+	ID   int    `json:"id"`
+}
 
 // Query struct for entire applications
 type Query struct {
@@ -41,6 +48,9 @@ var AppDBComm *sql.DB
 
 // services logger
 var Logger *slog.Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+// redis client
+var Redis *redis.Client
 
 // temp pk of database
 const KeyColumn string = "pk"
