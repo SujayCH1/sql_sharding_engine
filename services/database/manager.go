@@ -7,11 +7,7 @@ import (
 	"sql_sharding_engine/config"
 )
 
-type dbReq struct {
-	ReqType string          `json:"type"`
-	DBInfo  config.Database `json:"database"`
-}
-
+// func to add/remove database
 func HandleDatabase(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -47,6 +43,7 @@ func HandleDatabase(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// func to add db mapping
 func AddDatabase(d config.Database) error {
 	name := d.Name
 	id := d.ID
@@ -61,7 +58,9 @@ func AddDatabase(d config.Database) error {
 			shard_id INT NOT NULL PRIMARY KEY,
 			shard_hash VARCHAR(50) NOT NULL,
 			shard_host VARCHAR(50) NOT NULL,
-			shard_port INT NOT NULL
+			shard_port INT NOT NULL,
+			shard_user VARCHAR(50) NOT NULL,
+			shard_pass VARCHAR(50) NOT NULL
 		);`, name)
 
 	_, err := config.AppDBComm.Exec(query1, id, name)
@@ -78,6 +77,7 @@ func AddDatabase(d config.Database) error {
 	return nil
 }
 
+// fun to remove db mappings
 func DeleteDatabase(d config.Database) error {
 	name := d.Name
 	id := d.ID
@@ -98,4 +98,26 @@ func DeleteDatabase(d config.Database) error {
 
 	config.Logger.Info("Database deleted:", name)
 	return nil
+}
+
+// func to select db
+func (m *CurrDBManager) HandleSelectDB(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var db CurrDB
+	err := json.NewDecoder(r.Body).Decode(&db)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	m.SetCurrentDB(&db)
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Current DB set to: %s", db.Name)
+
+	config.Logger.Info("Current DB updated", "db", db.Name)
 }

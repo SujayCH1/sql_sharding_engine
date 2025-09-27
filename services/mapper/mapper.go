@@ -9,12 +9,6 @@ import (
 	"strconv"
 )
 
-type shardReq struct {
-	ReqType string          `json:"type"`
-	Shard   config.Shard    `json:"shard"`
-	DB      config.Database `json:"database"`
-}
-
 // func to handle shard add/ remove
 func HandleShard(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -37,7 +31,7 @@ func HandleShard(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-	case "remove":
+	case "delete":
 		err := RemoveShard(req.Shard, req.DB.Name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -58,13 +52,15 @@ func AddShard(s config.Shard, tableName string) error {
 	hash := CalcShardHash(strconv.Itoa(s.ShardID))
 	host := s.ShardHost
 	port := s.ShardPort
+	user := s.ShardUser
+	pass := s.ShardPass
 
 	query := fmt.Sprintf(
-		"INSERT INTO %s (database_name, shard_id, shard_hash, shard_host, shard_port) VALUES (?, ?, ?, ?, ?)",
+		"INSERT INTO %s (database_name, shard_id, shard_hash, shard_host, shard_port, shard_user, shard_pass) VALUES (?, ?, ?, ?, ?, ?, ?)",
 		tableName,
 	)
 
-	_, err := config.AppDBComm.Exec(query, name, id, hash, host, port)
+	_, err := config.AppDBComm.Exec(query, name, id, hash, host, port, user, pass)
 	if err != nil {
 		return fmt.Errorf("failed to insert shard %s into %s: %w", s.ShardName, tableName, err)
 	}

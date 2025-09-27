@@ -1,4 +1,4 @@
-package mapper
+package router
 
 import (
 	"hash/crc32"

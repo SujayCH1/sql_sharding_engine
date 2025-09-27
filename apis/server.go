@@ -3,7 +3,6 @@ package apis
 import (
 	"fmt"
 	"net/http"
-	"sql_sharding_engine/cache"
 	"sql_sharding_engine/config"
 	"sql_sharding_engine/services/database"
 	"sql_sharding_engine/services/mapper"
@@ -14,6 +13,8 @@ import (
 // func to expose backed on a local port
 func StartServer() error {
 
+	var CurrManager = &database.CurrDBManager{}
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/query", parser.HandleQuery)
@@ -22,7 +23,7 @@ func StartServer() error {
 
 	mux.HandleFunc("/database", database.HandleDatabase)
 
-	mux.HandleFunc("/selectdb", cache.HandleSelectDB)
+	mux.HandleFunc("/selectdb", CurrManager.HandleSelectDB)
 
 	server := &http.Server{
 		Addr:         ":8085",

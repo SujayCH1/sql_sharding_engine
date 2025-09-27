@@ -69,6 +69,8 @@ func LoadDBConn(c config.DBConnInfo) (*sql.DB, error) {
 	return conn, err
 }
 
+// func
+
 // func to establish and store connection detials and credentails of  application database
 func AddMainDBCred() error {
 
