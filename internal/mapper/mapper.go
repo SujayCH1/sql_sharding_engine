@@ -1,48 +1,14 @@
 package mapper
 
 import (
-	"encoding/json"
 	"fmt"
 	"hash/crc32"
-	"net/http"
-	"sql_sharding_engine/config"
+	"sql_sharding_engine/internal/config"
+	"sql_sharding_engine/pkg/logger"
 	"strconv"
 )
 
 // func to handle shard add/ remove
-func HandleShard(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var req shardReq
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-	}
-
-	switch req.ReqType {
-	case "add":
-		err := AddShard(req.Shard, req.DB.Name)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-	case "delete":
-		err := RemoveShard(req.Shard, req.DB.Name)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-	default:
-		http.Error(w, "invalid type", http.StatusBadRequest)
-	}
-
-}
 
 // func used to add a new shard in mapping table
 func AddShard(s config.Shard, tableName string) error {
@@ -69,7 +35,7 @@ func AddShard(s config.Shard, tableName string) error {
 		return fmt.Errorf("failed to insert shard %s: %w", s.ShardName, err)
 	}
 
-	config.Logger.Info("Added shard", name, "into mappings")
+	logger.Logger.Info("Added shard", name, "into mappings")
 
 	return nil
 }
@@ -88,7 +54,7 @@ func RemoveShard(s config.Shard, tableName string) error {
 		return fmt.Errorf("failed to remove shard %s from %s: %w", s.ShardName, tableName, err)
 	}
 
-	config.Logger.Info("Removed shard", s.ShardName, "from", tableName)
+	logger.Logger.Info("Removed shard", s.ShardName, "from", tableName)
 	return nil
 }
 

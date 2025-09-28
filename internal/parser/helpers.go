@@ -1,44 +1,26 @@
 package parser
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"sql_sharding_engine/config"
+	"sql_sharding_engine/internal/config"
 	"strings"
 
 	"github.com/xwb1989/sqlparser"
 )
 
-// Handler function for /query route
-// Parese query and timestamp for req body
-// Extracts primary key from query
-// Calls hasher to find expected shard credentials
-func HandleQuery(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
+// extractPKFromWhere returns primary key value from WHERE clause
+func extractPKFromWhere(where *sqlparser.Where) string {
+	if where == nil {
+		return ""
 	}
-
-	var reqBody config.Query
-
-	err := json.NewDecoder(r.Body).Decode(&reqBody)
-	if err != nil {
-		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
-		return
+	comp, ok := where.Expr.(*sqlparser.ComparisonExpr)
+	if !ok {
+		return ""
 	}
-
-	primaryKey, err := extractKeys(reqBody)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to extract primary key: %v", err), http.StatusBadRequest)
-		return
+	if strings.EqualFold(sqlparser.String(comp.Left), config.KeyColumn) && comp.Operator == "=" {
+		return sqlparser.String(comp.Right)
 	}
-
-	config.Logger.Info("Primary key extracted")
-
-	w.WriteHeader(http.StatusOK)
-	config.Logger.Info("Query received", "query", reqBody.QueryString, "primaryKey", primaryKey)
-
+	return ""
 }
 
 // helper to parse and find pk from query string

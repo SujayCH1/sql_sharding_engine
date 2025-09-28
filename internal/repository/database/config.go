@@ -10,7 +10,7 @@ type Database struct {
 	ID   int    `json:"id"`
 }
 
-type dbReq struct {
+type DBReq struct {
 	ReqType string   `json:"type"`
 	DBInfo  Database `json:"database"`
 }

@@ -3,10 +3,10 @@ package loader
 import (
 	"errors"
 	"fmt"
-	"sql_sharding_engine/apis"
-	"sql_sharding_engine/cache"
-	"sql_sharding_engine/config"
-	"sql_sharding_engine/services/connections"
+	"sql_sharding_engine/internal/api"
+	"sql_sharding_engine/internal/cache"
+	"sql_sharding_engine/internal/repository/connections"
+	"sql_sharding_engine/pkg/logger"
 
 	"github.com/joho/godotenv"
 )
@@ -31,7 +31,7 @@ func LoadServices() error {
 
 	cache.CreateRedisClient()
 
-	config.Logger.Info("All application services loaded.")
+	logger.Logger.Info("All application services loaded.")
 
 	return nil
 }
@@ -49,9 +49,9 @@ func LoadEnv() error {
 // funct expose all apis of application
 func LoadAppAPIs() error {
 	go func() {
-		err := apis.StartServer()
+		err := api.StartServer()
 		if err != nil {
-			config.Logger.Error("failed to start server", "error", err)
+			logger.Logger.Error("failed to start server", "error", err)
 		}
 	}()
 

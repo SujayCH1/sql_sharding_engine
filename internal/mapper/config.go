@@ -1,11 +1,11 @@
 package mapper
 
 import (
-	"sql_sharding_engine/config"
-	"sql_sharding_engine/services/database"
+	"sql_sharding_engine/internal/config"
+	"sql_sharding_engine/internal/repository/database"
 )
 
-type shardReq struct {
+type ShardReq struct {
 	ReqType string            `json:"type"`
 	Shard   config.Shard      `json:"shard"`
 	DB      database.Database `json:"database"`

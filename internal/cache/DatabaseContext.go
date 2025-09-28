@@ -2,7 +2,8 @@ package cache
 
 import (
 	"context"
-	"sql_sharding_engine/config"
+	"sql_sharding_engine/internal/config"
+	"sql_sharding_engine/pkg/logger"
 )
 
 func SetDBCache(ctx context.Context, name string) error {
@@ -11,7 +12,7 @@ func SetDBCache(ctx context.Context, name string) error {
 		return err
 	}
 
-	config.Logger.Info("Current Dataabse set to: ", name)
+	logger.Logger.Info("Current Dataabse set to: ", name)
 
 	return nil
 }

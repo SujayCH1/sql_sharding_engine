@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"sql_sharding_engine/config"
+	"sql_sharding_engine/internal/config"
+	"sql_sharding_engine/pkg/logger"
 	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -39,7 +40,7 @@ func LoadMainDBConn() error {
 
 	config.AppDBComm = conn
 
-	config.Logger.Info("Established connection with application database.")
+	logger.Logger.Info("Established connection with application database.")
 
 	return nil
 }
@@ -64,7 +65,7 @@ func LoadDBConn(c config.DBConnInfo) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to ping shard: %w", err)
 	}
 
-	config.Logger.Info("Established connection with shard: ", c.DBName, ".")
+	logger.Logger.Info("Established connection with shard: ", c.DBName, ".")
 
 	return conn, err
 }

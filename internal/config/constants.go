@@ -3,8 +3,6 @@ package config
 import (
 	// "database/sql"
 	sqlInst "database/sql"
-	"log/slog"
-	"os"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -42,9 +40,6 @@ var AppDBCommInfo *DBConnInfo
 
 // App Db connection instance
 var AppDBComm *sqlInst.DB
-
-// services logger
-var Logger *slog.Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 // redis client
 var Redis *redis.Client

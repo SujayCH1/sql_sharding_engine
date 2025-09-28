@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"sql_sharding_engine/config"
+	"sql_sharding_engine/internal/config"
 
 	"github.com/redis/go-redis/v9"
 )

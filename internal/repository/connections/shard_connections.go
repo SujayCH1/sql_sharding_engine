@@ -3,7 +3,7 @@ package connections
 import (
 	"database/sql"
 	"fmt"
-	"sql_sharding_engine/config"
+	"sql_sharding_engine/internal/config"
 	// "sql_sharding_engine/services/database"
 )
 
