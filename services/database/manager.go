@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sql_sharding_engine/config"
+	"sql_sharding_engine/services/connections"
 )
 
 // func to add/remove database
@@ -44,7 +45,7 @@ func HandleDatabase(w http.ResponseWriter, r *http.Request) {
 }
 
 // func to add db mapping
-func AddDatabase(d config.Database) error {
+func AddDatabase(d Database) error {
 	name := d.Name
 	id := d.ID
 
@@ -78,7 +79,7 @@ func AddDatabase(d config.Database) error {
 }
 
 // fun to remove db mappings
-func DeleteDatabase(d config.Database) error {
+func DeleteDatabase(d Database) error {
 	name := d.Name
 	id := d.ID
 
@@ -115,6 +116,17 @@ func (m *CurrDBManager) HandleSelectDB(w http.ResponseWriter, r *http.Request) {
 	}
 
 	m.SetCurrentDB(&db)
+
+	err = connections.ShardConnMgr.GetShardConnection(db.Name, db.ID)
+	if err != nil {
+		config.Logger.Error(
+			"Error while getting shard connections",
+			"dbID", db.ID,
+			"error", err,
+		)
+
+		http.Error(w, "Shard Connection failed", http.StatusInternalServerError)
+	}
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Current DB set to: %s", db.Name)

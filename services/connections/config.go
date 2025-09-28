@@ -9,23 +9,18 @@ import (
 type ActiveDBShardConnectionManager struct {
 	mu         sync.Mutex
 	ActiveDB   int
-	ShardConns map[string]*sql.DB
+	ShardConns map[int]map[int]*sql.DB
 }
 
-func (m *ActiveDBShardConnectionManager) SetShardConn(name string, conn *sql.DB) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if m.ShardConns == nil {
-		m.ShardConns = make(map[string]*sql.DB)
-	}
-	m.ShardConns[name] = conn
+// Current establish shard connections
+var ShardConnMgr = &ActiveDBShardConnectionManager{}
+
+type CurrDBInfo struct {
+	Name string `json:"name"`
+	ID   int    `json:"id"`
 }
 
-func (m *ActiveDBShardConnectionManager) CloseAll() {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for _, conn := range m.ShardConns {
-		conn.Close()
-	}
-	m.ShardConns = make(map[string]*sql.DB)
+type CurrDBGetter interface {
+	GetID() int
+	GetName() string
 }

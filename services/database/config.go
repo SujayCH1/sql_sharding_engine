@@ -2,18 +2,22 @@ package database
 
 import (
 	"database/sql"
-	"sql_sharding_engine/config"
 	"sync"
 )
 
+type Database struct {
+	Name string `json:"name"`
+	ID   int    `json:"id"`
+}
+
 type dbReq struct {
-	ReqType string          `json:"type"`
-	DBInfo  config.Database `json:"database"`
+	ReqType string   `json:"type"`
+	DBInfo  Database `json:"database"`
 }
 
 type CurrDB struct {
-	Name string `json:"name"`
-	ID   int    `json:"id"`
+	Name string
+	ID   int
 }
 
 type CurrDBManager struct {
@@ -21,6 +25,9 @@ type CurrDBManager struct {
 	curr       *CurrDB
 	shardConns map[string]*sql.DB
 }
+
+// Current selected databse instance
+var CurrDBMgr = &CurrDBManager{}
 
 // Thread-safe setter
 func (m *CurrDBManager) SetCurrentDB(db *CurrDB) {

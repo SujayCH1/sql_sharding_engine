@@ -1,18 +1,14 @@
 package config
 
 import (
-	"database/sql"
+	// "database/sql"
+	sqlInst "database/sql"
 	"log/slog"
 	"os"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
-
-type Database struct {
-	Name string `json:"name"`
-	ID   int    `json:"id"`
-}
 
 // Query struct for entire applications
 type Query struct {
@@ -45,7 +41,7 @@ type DBConnInfo struct {
 var AppDBCommInfo *DBConnInfo
 
 // App Db connection instance
-var AppDBComm *sql.DB
+var AppDBComm *sqlInst.DB
 
 // services logger
 var Logger *slog.Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
