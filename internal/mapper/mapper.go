@@ -31,10 +31,6 @@ func AddShard(s config.Shard, tableName string) error {
 		return fmt.Errorf("failed to insert shard %s into %s: %w", s.ShardName, tableName, err)
 	}
 
-	if err != nil {
-		return fmt.Errorf("failed to insert shard %s: %w", s.ShardName, err)
-	}
-
 	logger.Logger.Info("Added shard", name, "into mappings")
 
 	return nil

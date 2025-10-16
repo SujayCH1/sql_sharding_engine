@@ -8,8 +8,8 @@ import (
 )
 
 func (m *ActiveDBShardConnectionManager) SetShardConn(dbID, shardID int, conn *sql.DB) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.Mu.Lock()
+	defer m.Mu.Unlock()
 	if m.ShardConns == nil {
 		m.ShardConns = make(map[int]map[int]*sql.DB)
 	}
@@ -20,8 +20,8 @@ func (m *ActiveDBShardConnectionManager) SetShardConn(dbID, shardID int, conn *s
 }
 
 func (m *ActiveDBShardConnectionManager) GetShardConn(dbID, shardID int) (*sql.DB, bool) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.Mu.Lock()
+	defer m.Mu.Unlock()
 	shardMap, ok := m.ShardConns[dbID]
 	if !ok {
 		return nil, false
@@ -31,8 +31,8 @@ func (m *ActiveDBShardConnectionManager) GetShardConn(dbID, shardID int) (*sql.D
 }
 
 func (m *ActiveDBShardConnectionManager) CloseDBShards(dbID int) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.Mu.Lock()
+	defer m.Mu.Unlock()
 	if shardMap, ok := m.ShardConns[dbID]; ok {
 		for _, conn := range shardMap {
 			conn.Close()

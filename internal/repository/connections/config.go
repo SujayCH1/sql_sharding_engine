@@ -7,7 +7,7 @@ import (
 
 // to handle connection of all sahrds for current selected database
 type ActiveDBShardConnectionManager struct {
-	mu         sync.Mutex
+	Mu         sync.Mutex
 	ActiveDB   int
 	ShardConns map[int]map[int]*sql.DB
 }
