@@ -24,6 +24,10 @@ func StartServer() error {
 
 	mux.HandleFunc("/selectdb", handlers.HandleSelectDB(CurrManager))
 
+	mux.HandleFunc("/fecthDatabase", handlers.HandleDBMappingView)
+
+	mux.HandleFunc("/fetchShards", handlers.HandleShardView)
+
 	server := &http.Server{
 		Addr:         ":8085",
 		Handler:      mux,

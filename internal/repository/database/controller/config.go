@@ -1,0 +1,6 @@
+package database
+
+type RowsData struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
