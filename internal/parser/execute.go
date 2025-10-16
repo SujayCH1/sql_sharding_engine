@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"sql_sharding_engine/internal/repository/connections"
+	database "sql_sharding_engine/internal/repository/database/controller"
 	"sql_sharding_engine/pkg/logger"
 
 	"github.com/xwb1989/sqlparser"
@@ -10,6 +11,16 @@ import (
 
 func ExecuteDDL(stmt sqlparser.Statement, queryString string) error {
 	logger.Logger.Info("DDL query received", "query", queryString)
+
+	// Fetch all shards for the currently selected DB
+	shards, err := database.FetchShards()
+	if err != nil {
+		return fmt.Errorf("failed to fetch shards: %w", err)
+	}
+
+	if len(shards) == 0 {
+		return fmt.Errorf("no shards found for current database")
+	}
 
 	mgr := connections.ShardConnMgr
 	dbID := mgr.ActiveDB
@@ -21,32 +32,32 @@ func ExecuteDDL(stmt sqlparser.Statement, queryString string) error {
 	mgr.Mu.Lock()
 	defer mgr.Mu.Unlock()
 
-	shards, ok := mgr.ShardConns[dbID]
-	if !ok || len(shards) == 0 {
-		return fmt.Errorf("no shard connections found for DB %d", dbID)
-	}
+	// Iterate through all shard connections for the current DB
+	for _, shard := range shards {
+		shardID := shard.ShardID
+		conn, ok := mgr.ShardConns[dbID][shardID]
 
-	for shardID, conn := range shards {
-		if conn == nil {
-			logger.Logger.Warn("Skipping nil connection for shard", "shardID", shardID)
+		if !ok || conn == nil {
+			logger.Logger.Warn("Skipping nil or missing connection for shard", "shardID", shardID)
 			continue
 		}
 
-		dbName := mgr.ShardDBNames[dbID][shardID]
+		dbName := shard.ShardName
 
+		// Switch to the shard's database
 		useQuery := fmt.Sprintf("USE %s;", dbName)
-
 		if _, err := conn.Exec(useQuery); err != nil {
 			logger.Logger.Error("Failed to select database on shard", "shardID", shardID, "error", err)
 			return fmt.Errorf("failed to select database on shard %d: %w", shardID, err)
 		}
 
+		// Execute the DDL query
 		if _, err := conn.Exec(queryString); err != nil {
 			logger.Logger.Error("Failed to execute DDL on shard", "shardID", shardID, "error", err)
 			return fmt.Errorf("failed on shard %d: %w", shardID, err)
 		}
 
-		logger.Logger.Info("DDL executed successfully on shard", "shardID", shardID)
+		logger.Logger.Info("✅ DDL executed successfully on shard", "shardID", shardID, "dbName", dbName)
 	}
 
 	return nil
