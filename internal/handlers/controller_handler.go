@@ -31,7 +31,7 @@ func HandleShardView(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	}
 
-	shards, err := database.FecthShards()
+	shards, err := database.FetchShards()
 	if err != nil {
 		http.Error(w, "Error: Internal Server Error", http.StatusInternalServerError)
 		logger.Logger.Error("Error: %s", err)

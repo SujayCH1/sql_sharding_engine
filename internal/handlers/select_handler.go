@@ -27,7 +27,7 @@ func HandleSelectDB(m *database.CurrDBManager) http.HandlerFunc {
 			return
 		}
 
-		m.SetCurrentDB(&db)
+		database.CurrDBMgr.SetCurrentDB(&db)
 
 		if err := connections.ShardConnMgr.GetShardConnection(db.Name, db.ID); err != nil {
 			logger.Logger.Error("Error while getting shard connections", "dbID", db.ID, "error", err)
@@ -37,6 +37,11 @@ func HandleSelectDB(m *database.CurrDBManager) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "Current DB set to: %s", db.Name)
-		logger.Logger.Info("Current DB updated", "db", db.Name)
+
+		// Use the same manager instance, not the global
+		curr := database.CurrDBMgr.GetCurrentDB()
+		if curr != nil {
+			logger.Logger.Info("Current DB updated", "db", curr.Name)
+		}
 	}
 }

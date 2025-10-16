@@ -6,28 +6,32 @@ import (
 	"sql_sharding_engine/internal/repository/database"
 )
 
-func FecthShards() ([]config.Shard, error) {
+func FetchShards() ([]config.Shard, error) {
 	currDB := database.CurrDBMgr.GetCurrentDB()
+	if currDB == nil {
+		return nil, fmt.Errorf("current DB is not set")
+	}
+
+	if config.AppDBComm == nil {
+		return nil, fmt.Errorf("database connection is not initialized")
+	}
 
 	query := fmt.Sprintf("SELECT * FROM %s", currDB.Name)
 
-	shards, err := config.AppDBComm.Query(query)
+	rows, err := config.AppDBComm.Query(query)
 	if err != nil {
-		return []config.Shard{}, fmt.Errorf("Error: Failed to fetch Shards for view")
+		return nil, fmt.Errorf("failed to fetch shards for view %s: %w", currDB.Name, err)
 	}
+	defer rows.Close()
 
-	var Data []config.Shard
-
-	for shards.Next() {
+	var data []config.Shard
+	for rows.Next() {
 		var temp config.Shard
-
-		if err := shards.Scan(&temp.ShardName, &temp.ShardID, &temp.ShardHash, &temp.ShardPort, &temp.ShardUser, &temp.ShardPass); err != nil {
-			return []config.Shard{}, fmt.Errorf("failed to parrse rows for view : %s: %w", config.AppDBCommInfo.DBName, err)
+		if err := rows.Scan(&temp.ShardName, &temp.ShardID, &temp.ShardHash, &temp.ShardHost, &temp.ShardPort, &temp.ShardUser, &temp.ShardPass); err != nil {
+			return nil, fmt.Errorf("failed to parse rows for view %s: %w", currDB.Name, err)
 		}
-
-		Data = append(Data, temp)
+		data = append(data, temp)
 	}
 
-	return Data, nil
-
+	return data, nil
 }
