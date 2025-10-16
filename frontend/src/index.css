@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* SQL Sharding Management Tool - Dark Theme Design System */
+
+@layer base {
+  :root {
+    /* Dark theme primary colors */
+    --background: 220 13% 7%;
+    --foreground: 220 9% 96%;
+    
+    /* Card styling */
+    --card: 220 13% 9%;
+    --card-foreground: 220 9% 96%;
+    
+    /* Primary blue accent */
+    --primary: 217 91% 60%;
+    --primary-foreground: 220 13% 7%;
+    --primary-glow: 217 91% 70%;
+    
+    /* Secondary grays */
+    --secondary: 220 13% 15%;
+    --secondary-foreground: 220 9% 85%;
+    
+    /* Muted elements */
+    --muted: 220 13% 12%;
+    --muted-foreground: 220 9% 60%;
+    
+    /* Accent colors */
+    --accent: 220 13% 15%;
+    --accent-foreground: 220 9% 96%;
+    
+    /* Success/Error states */
+    --success: 142 76% 36%;
+    --success-foreground: 355 7% 97%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 48 96% 89%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Borders and inputs */
+    --border: 220 13% 20%;
+    --input: 220 13% 15%;
+    --ring: 217 91% 60%;
+    
+    /* Sidebar styling */
+    --sidebar-background: 220 13% 8%;
+    --sidebar-foreground: 220 9% 85%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 220 13% 7%;
+    --sidebar-accent: 220 13% 12%;
+    --sidebar-accent-foreground: 220 9% 96%;
+    --sidebar-border: 220 13% 18%;
+    
+    /* Custom gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 70%));
+    --gradient-card: linear-gradient(135deg, hsl(220 13% 9%), hsl(220 13% 12%));
+    --gradient-sidebar: linear-gradient(180deg, hsl(220 13% 8%), hsl(220 13% 6%));
+    
+    /* Shadows */
+    --shadow-glow: 0 0 20px hsl(217 91% 60% / 0.3);
+    --shadow-card: 0 8px 32px hsl(220 13% 5% / 0.8);
+    --shadow-elevated: 0 16px 48px hsl(220 13% 3% / 0.9);
+    
+    /* Animation values */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Custom component styles */
+  .card-gradient {
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .glow-effect {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .sidebar-gradient {
+    background: var(--gradient-sidebar);
+  }
+
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+
+  /* Query editor styling */
+  .query-editor {
+    @apply bg-muted border border-border rounded-lg p-4 font-mono text-sm;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary;
+    min-height: 200px;
+    resize: vertical;
+  }
+
+  /* Table styling for dark theme */
+  .data-table {
+    @apply bg-card border border-border rounded-lg overflow-hidden;
+  }
+
+  .data-table th {
+    @apply bg-muted text-muted-foreground font-medium px-4 py-3 text-left border-b border-border;
+  }
+
+  .data-table td {
+    @apply px-4 py-3 border-b border-border/50;
+  }
+
+  .data-table tr:hover {
+    @apply bg-accent/50;
+  }
+
+  /* Status indicators */
+  .status-online {
+    @apply bg-success text-success-foreground;
+  }
+
+  .status-offline {
+    @apply bg-destructive text-destructive-foreground;
+  }
+
+  .status-warning {
+    @apply bg-warning text-warning-foreground;
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary;
+  }
+}
